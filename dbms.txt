@@ -1,0 +1,20 @@
+DBMS => Database Managment Systems
+
+RDBMS => tables, each table have relation with other table
+SQL ->  follow SQL syntax (realation)
+    oracle
+    mysql
+    pgsql
+    ms access 
+
+NoSql -> non realational
+    mongodb
+    couchdb
+    dynamodb
+    cassandra
+    redis
+
+
+
+
+Nosql => collection of documents (json/bson)
