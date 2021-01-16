@@ -1,58 +1,98 @@
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
-const {MongoClient} = require('mongodb')
-const client = new MongoClient("mongodb://localhost:27017")
+const UserModel = require('./model/User')
+const TransactionModel = require('./model/Trasaction')
+const mongoose = require('mongoose')
+
+
+mongoose.connect("mongodb+srv://mernclass:mernclass@seller-manager.vtu3z.mongodb.net/mernstack?retryWrites=true&w=majority", {
+    useNewUrlParser: true,        
+}).catch(err => console.log(err.reason));
 
 
 
 app.use(bodyParser.json({ extended: false }))
 app.use(bodyParser.urlencoded({ extended: false }))
 
-app.all('/students', (req, res, next)=>{
-    console.log("for all type of request for /students")
-    next()
-})
-
-
-app.get('/students', (req, res, next)=>{
-    let query = req.query
-    console.log(query)
-    let students = [
-        {name:"deepti"},
-        {name:"priyanka"},
-        {name:"rajat"},
-        {name:"mayank"},
-        {name:"rishabh"},
-        {name:"shivam"},
-        {name:"suyash"},
-    ]    
-    res.send(students)  
-})
-
-app.post('/students', async (req, res)=>{    
-
-    let {name, email, password} = req.body
-    await client.connect()
-
-    let db = await client.db("mernstack2001")
-    
-    let result = await db.collection("users").insertOne({
-        name,
+app.post('/register', async (req, res)=>{
+    let {username, email, password} = req.body
+    let userobj = {
+        username,
         email,
-        password,
+        password,        
+    }
+    
+    let user = new UserModel(userobj)
+
+
+    let data = await UserModel.find({email})
+    
+    if(data.length > 0){
+        res.send({status:"ERR", msg:"Email already registred"})
+    }else{
+        user.save().then(result=>{
+            console.log(result)
+            res.send({status:"OK", msg:"Successfully Registered"})
+        }).catch(err=>{
+            console.log(err)
+            res.send({status:"ERR", msg:"something went wrong"})
+        })
+    }
+})
+
+app.post('/login', (req, res)=>{
+    let {email, password} = req.body
+
+    UserModel.find({email, password}).then(result=>{
+        if(result.length > 0){
+            //user found in db
+            res.send({
+                status:"OK",
+                msg:"Successfully logged in",
+                data:{token:result[0]._id, username:result[0].username}
+            })
+        }else{
+            //invalid username or password
+            res.send("invalid username or password")
+        }
         
+        res.send({data:result})
+    }).catch(err=>{
+        res.send({msg:"Err"})
     })
-    console.log(result)
-    res.send({msg:"success"})
-    // .then((data)=>{
-    //     res.send({msg:"Successfully inserted"})  
-    // }).catch(err=>{
-    //     res.send({msg:"Error"})  
-    // })    
 })
 
 
+app.post('/transaction', (req, res)=>{
+   let {userid, amount, type, remark} = req.body
+   let txn = new TransactionModel({
+       userid,
+       amount,
+       type,
+       remark
+   })
+
+   txn.save().then(result=>{
+    res.send({status:"OK", msg:"Successfully Saved"})
+
+   }).catch(err=>{
+       console.log(err)
+    res.send({status:"ERR", msg:"Something went wrong", err})
+   })
+})
+
+
+app.post('/get-transactions', (req, res)=>{
+    let {userid} = req.body    
+ 
+    TransactionModel.find({userid}).then(result=>{     
+        res.send({status:"OK", data:result})
+    }).catch(err=>{
+     
+     res.send({status:"ERR", msg:"Something went wrong", err})
+    })
+ })
 
 
 
