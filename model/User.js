@@ -8,3 +8,7 @@ let UserSchema = mongoose.Schema({
 }, {timestamps:true})
 
 module.exports = mongoose.model('user', UserSchema)
+
+
+//obj => must => run time memory allocation 
+//obj => static => compile time memory allocation
