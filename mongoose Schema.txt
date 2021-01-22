@@ -1,0 +1,29 @@
+mongoose Schema
+------------------
+
+user : username 
+        email 
+        password 
+
+transaction : 
+        userId 
+        amount 
+        type 
+        date         
+        remark 
+
+
+apis
+-----------------------
+/register ==> done 
+/login    ==> working
+/get-transaction 
+/add-transaction 
+
+
+react-routes 
+---------------------------
+/login 
+/register 
+/transactions 
+

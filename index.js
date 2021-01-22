@@ -6,6 +6,7 @@ const TransactionModel = require('./model/Trasaction')
 const mongoose = require('mongoose')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 
 const SERVER_SECRET = "onetwokafourmynameislakhan"
 
@@ -37,34 +38,46 @@ app.post('/register', async (req, res)=>{
     if(data.length > 0){
         res.send({status:"ERR", msg:"Email already registred"})
     }else{
-        user.save().then(result=>{
-            console.log(result)
-            res.send({status:"OK", msg:"Successfully Registered"})
+        bcrypt.hash(userobj.password, 15).then(encPwd=>{
+            user.password = encPwd
+            user.save().then(result=>{
+                console.log(result)
+                res.send({status:"OK", msg:"Successfully Registered"})
+            }).catch(err=>{
+                console.log(err)
+                res.send({status:"ERR", msg:"something went wrong"})
+            })
         }).catch(err=>{
             console.log(err)
             res.send({status:"ERR", msg:"something went wrong"})
         })
+       
     }
 })
 
 app.post('/login', (req, res)=>{
     let {email, password} = req.body
 
-    UserModel.find({email, password}).then(result=>{
+    UserModel.find({email}).then(result=>{
         if(result.length > 0){
             //user found in db
-            let token = jwt.sign({id:result[0]._id, username:result[0].username}, SERVER_SECRET)
-            res.send({
-                status:"OK",
-                msg:"Successfully logged in",
-                data:{token}
+            //compare password
+            bcrypt.compare(password, result[0].password).then(scs=>{
+                let token = jwt.sign({id:result[0]._id, username:result[0].username}, SERVER_SECRET)
+                res.send({
+                    status:"OK",
+                    msg:"Successfully logged in",
+                    data:{token}
+                })
+            }).catch(err=>{
+                console.log(err)
+                res.send({status:"ERR", msg:"invalid username or password"})
             })
+           
         }else{
             //invalid username or password
             res.send({status:"ERR", msg:"invalid username or password"})
-        }
-        
-        res.send({data:result})
+        }        
     }).catch(err=>{
         res.send({msg:"Err"})
     })
@@ -101,11 +114,17 @@ app.post('/transaction', async (req, res)=>{
 })
 
 
-app.post('/get-transactions', (req, res)=>{
+app.post('/get-transactions', async (req, res)=>{
     
-    let {userid} = req.body    
+    let {token} = req.body    
+    try{
+        var decoded = await jwt.verify(token, SERVER_SECRET)
+       }catch(e){
+           console.log(e)
+           res.send({status:"ERR", msg:"Invalid Authentication Token"})
+       }
  
-    TransactionModel.find({userid}).then(result=>{     
+    TransactionModel.find({userid:decoded.id}).then(result=>{     
         res.send({status:"OK", data:result})
     }).catch(err=>{
      
