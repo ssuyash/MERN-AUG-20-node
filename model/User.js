@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 let UserSchema = mongoose.Schema({
     username:String,
     email:String,
+    mobile:String,
     password:String    
 }, {timestamps:true})
 
